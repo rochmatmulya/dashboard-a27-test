@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>A27 - Summary Dashboard</title>
+<style>
+    @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;700;800;900&display=swap');
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Poppins', sans-serif; }
+    body { background: #f5f7fa; padding: 20px; color: #1a3b5c; }
+.header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+.header h1 { font-size: 28px; font-weight: 700; border-left: 6px solid #1a3b5c; padding-left: 12px; }
+.filter-box select { padding: 6px 10px; border: 1px solid #ccc; border-radius: 4px; }
+.info-top { display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 20px; }
+.info-top span.label { background: #eef1f5; padding: 2px 6px; font-weight: 600; }
+
+/* 3 KPI TERATAS */
+.kpi-grid-top { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-bottom: 25px; }
+.kpi-card-big { background: #fff; border-radius: 12px; padding: 18px; box-shadow: 0 2px 6px rgba(0,0,0,0.05); display: flex; align-items: center; gap: 20px; }
+.kpi-card-big .icon { font-size: 48px; } /* INI YG DIBENERIN + DIGEDEIN */
+.kpi-card-big .title { font-size: 16px; font-weight: 800; color: #1a3b5c; text-transform: letter-spacing: 0.5px; margin-bottom: 4px; } /* TAMBAH SPASI JUGA */
+.kpi-card-big .value { font-size: 32px; font-weight: 700; color: #000; line-height: 1.2; } /* TAMBAH SPASI JUGA */
+.kpi-card-big .meta { font-size: 12px; margin-top: 6px; color: #555; } /* TAMBAH SPASI JUGA */
+.arrow.up { color: #2ecc71; font-weight: 900; } /* 900 = paling tebel */
+.arrow.down { color: #e74c3c; font-weight: 900; } /* 900 = paling tebel */
+.arrow { 
+    font-size: 20px; 
+    font-weight: 900; /* DITEBELIN BANGET */
+    -webkit-text-stroke: 2px; /* KASIH GARIS LUAR BIAR MAKIN TEBEL */
+}
+
+/* SECTION KPI CARD */
+.section { display: flex; margin-bottom: 18px; align-items: flex-start; }
+.section-label { width: 180px; display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 16px; }
+.section-label span { font-size: 42px; 
+    line-height: 3.5; /* BIAR GAK NGGANTUNG */
+    display: flex; 
+    align-items: center;  /* INI BUAT GEDEIN ICON 📊🎥📢 */
+    }
+.section-kpis { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; flex: 1; }
+.kpi-card { background: #fff; border-radius: 10px; padding: 14px; text-align: center; box-shadow: 0 1px 4px rgba(0,0,0,0.05); }
+.kpi-card .title { font-size: 16px; font-weight: 700; color: #1a3b5c; margin-bottom: 8px; letter-spacing: 0.3px; } /* TAMBAH SPASI + GEDEIN DIKIT */
+.kpi-card .value { font-size: 18px; font-weight: 700; color: #000; } /* TAMBAH SPASI + GEDEIN DIKIT */
+.kpi-card .sub { font-size: 12px; display: flex; justify-content: space-between; margin-top: 6px; color: #555; }
+</style>
+</head>
+<body>
+
+<div class="header">
+    <h1>A27 - SUMMARY DASHBOARD</h1>
+    <div class="filter-box">
+        <label>Week: </label>
+        <select id="weekFilter"></select>
+    </div>
+</div>
+
+<div class="info-top">
+    <div><span class="label">Product</span> A27 <br><span class="label">Phase</span> <span id="phaseText">Pre Order</span></div>
+    <div><span class="label">Period</span> <span id="periodText">-</span></div>
+</div>
+
+<div class="kpi-grid-top" id="topKpis"></div>
+<div id="sections"></div>
+
+<script>
+const csv = `Product	Channel	Phase	Week	Metric	N-1	KPI	Actual	Index N-1	Achievement	Time Gone
+QHB8	PR Media	Teaser	Week 29	Clips	457	494	249	0.54	50%	
+QHB8	PR TR	Teaser	Week 29	Clips	96	106	41	0.43	39%	
+QHB8	PR Media	Teaser	Week 30	Clips	457	494	349	0.76	71%	
+QHB8	PR TR	Teaser	Week 30	Clips	59	106	59	1.00	56%	
+QHB8	PR Media	Teaser	Week 31	Clips	457	494	378	0.83	77%	30%
+QHB8	PR TR	Teaser	Week 31	Clips	96	106	74	0.77	70%	18%
+QHB8	PR Media	Teaser	Week 32	Clips	457	494	413	0.90	84%	35%
+QHB8	PR TR	Teaser	Week 32	Clips	96	106	85	0.89	80%	25%
+QHB8	Media	Teaser	Week 30	Spend	1315126302	40752999	0.03	
+QHB8	Media	Teaser	Week 31	Spend	1625423126	951202749	0.59	9%
+QHB8	Media	Teaser	Week 32	Spend	1625423126	-	16%
+QHB8	Media	Teaser	Week 32	CVR	0.01%	0.02%	0.16%	16.00	1067%	16%
+QHB8	Media	Teaser	Week 32	Quality Visit	5030000	6040000	188750	0.04	3%	16%
+QHB8	Media	Teaser	Week 32	Order	503	906	302	0.60	33%	16%
+QHB8	Media	Teaser	Week 32	Search Volume SIT	35000	37000	15613	0.45	42%	16%
+QHB8	Digital KOL	Teaser	Week 32	NOK	13	20	11	0.85	55%	16%
+QHB8	Digital KOL	Teaser	Week 32	NOP	23	29	17	0.74	59%	16%
+QHB8	Digital KOL	Teaser	Week 32	Potential Reach	17500000	19500000	11896472	0.68	61%	16%
+QHB8	Digital KOL	Teaser	Week 32	Engagement Volume	220500	273000	59482	0.27	22%	16%
+QHB8	Digital KOL	Teaser	Week 32	Engagement Rate	1.26%	1.40%	0.50%	0.40	36%	16%
+QHB8	Digital OA Buzz	Teaser	Week 32	Buzz	59635	59635	28767	0.48	48%	16%
+QHB8	Digital OA Buzz	Teaser	Week 32	NPS	35.39%	39.00%	95.60%	2.70	245%	16%
+QHB8	SM	Teaser	Week 32	Review SNS	19	28	28	1.47	100%	16%
+QHB8	SM	Teaser	Week 32	Banner Impressions	76820	78356	85196	1.11	109%	16%
+QHB8	SM	Teaser	Week 32	S.com QV	2038	2242	234	0.11	10%	16%
+QHB8	SM	Teaser	Week 32	S.com CVR	2.65%	2.86%	0.27%	0.10	10%	16%
+QHB8	All	Teaser	Week 32	Sell-out	24938	15983	0.64	16%
+QHB8	All	Teaser	Week 32	Retail Traffic	3716193	3907709	1.05	16%
+QHB8	All	Teaser	Week 31	Sell-out	17860	11897	0.67	9%
+QHB8	All	Teaser	Week 31	Retail Traffic	3055299	3217126	1.05	9%
+QHB8	All	Teaser	Week 30	Sell-out	6778	7845	1.16	
+QHB8	All	Teaser	Week 30	Retail Traffic	2385280	2489742	1.04	
+`;
+
+const headers = csv.split('\n')[0].split('\t');
+const data = csv.split('\n').slice(1).map(row => {
+    const cols = row.split('\t');
+    let obj = {};
+    headers.forEach((h,i) => obj[h.trim()] = cols[i]? cols[i].trim() : '');
+    return obj;
+});
+
+const weekFilter = document.getElementById('weekFilter');
+const weeks = [...new Set(data.map(d => d.Week))].sort();
+weeks.forEach(w => { let opt = document.createElement('option'); opt.value = w; opt.textContent = w; weekFilter.appendChild(opt); });
+
+const layout = {
+    "Top": ["Sell-out", "Search Volume SIT", "Retail Traffic"],
+    "Performance & Investment": ["Quality Visit", "Order", "Spend", "CVR"],
+    "Influencer": ["NOK", "NOP", "Potential Reach", "Engagement Volume", "Engagement Rate"],
+    "PR": ["Clips"],
+    "Samsung Member": ["Review SNS", "Banner Impressions", "S.com QV", "S.com CVR"],
+    "Social Media": ["Buzz", "NPS"]
+};
+
+const iconMap = { "Top": ["🛒", "🔍", "🏬"], "Performance & Investment": "📊", "Influencer": "🎥", "PR": "📢", "Samsung Member": "Ⓜ️", "Social Media": "💬" };
+
+function formatNum(val) {
+    if(!val || val === '-') return '-';
+    let num = parseFloat(val.toString().replace(/,/g,'').replace('%',''));
+    if(isNaN(num)) return val;
+    return val.includes('%')? num.toFixed(2)+'%' : num.toLocaleString('en-US');
+}
+
+function getIndicator(row) {
+    if(!row) return '';
+    const idx = parseFloat(row['Index N-1']);
+    const ar = parseFloat(row['Achievement']);
+    const tg = parseFloat(row['Time Gone']);
+    if(!isNaN(idx) && idx > 0.99) return 'up';
+    if(!isNaN(ar) &&!isNaN(tg) && ar > tg) return 'up';
+    if(!isNaN(idx) && idx <= 0.99) return 'down';
+    if(!isNaN(ar) &&!isNaN(tg) && ar < tg) return 'down';
+    return '';
+}
+
+function render() {
+    const week = weekFilter.value;
+    const weekData = data.filter(d => d.Week === week);
+    document.getElementById('phaseText').textContent = weekData[0]?.Phase || '-';
+    document.getElementById('periodText').textContent = week;
+
+    const topContainer = document.getElementById('topKpis'); topContainer.innerHTML = '';
+    layout.Top.forEach((metric, i) => {
+        const row = weekData.find(d => d.Metric === metric && d.Channel === 'All') || weekData.find(d => d.Metric === metric);
+        const val = row?.Actual || '-';
+        const idx = row?.['Index N-1'] || '-';
+        const arrow = getIndicator(row);
+        // UDAH DIBOLD
+        topContainer.innerHTML += `<div class="kpi-card-big"><div class="icon">${iconMap.Top[i]}</div><div><div class="title"><b>${metric}</b></div><div class="value">${formatNum(val)}</div><div class="meta">Index N-1 ${idx} <span class="arrow ${arrow}">${arrow==='up'?'▲':arrow==='down'?'▼':''}</span></div></div></div>`;
+    });
+
+    const secContainer = document.getElementById('sections'); secContainer.innerHTML = '';
+    Object.keys(layout).filter(k => k!== 'Top').forEach(section => {
+        let kpiHtml = '';
+        layout[section].forEach(metric => {
+            weekData.filter(d => d.Metric === metric).forEach(row => {
+                const val = row.Actual || '-'; const ar = row.Achievement || '-'; const tg = row['Time Gone'] || '-'; const arrow = getIndicator(row);
+                // UDAH DIBOLD JUGA
+                kpiHtml += `<div class="kpi-card"><div class="title"><b>${metric}</b></div><div class="value">${formatNum(val)}</div><div class="sub"><span>AR ${ar}</span><span class="arrow ${arrow}">${arrow==='up'?'▲':arrow==='down'?'▼':''}</span></div><div class="sub"><span>Time Gone ${tg}</span></div></div>`;
+            });
+        });
+        secContainer.innerHTML += `<div class="section"><div class="section-label"><span>${iconMap[section]}</span> ${section}</div><div class="section-kpis">${kpiHtml}</div></div>`;
+    });
+}
+weekFilter.addEventListener('change', render);
+weekFilter.value = weeks[weeks.length-1]; render();
+</script>
+</body>
+</html>
