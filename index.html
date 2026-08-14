@@ -1,4 +1,23 @@
 <!DOCTYPE html>
+<script>
+(function() {
+  const USER = "human";
+  const PASS = "8927"; // <-- ganti jadi ini
+  const KEY = "dashboard_login_a27";
+
+  if (sessionStorage.getItem(KEY) !== "ok") {
+    let u = prompt("Username:");
+    let p = prompt("Password:");
+    if (u === USER && p === PASS) {
+      sessionStorage.setItem(KEY, "ok");
+    } else {
+      alert("Username atau Password salah!");
+      document.write("<h2 style='text-align:center;margin-top:100px;font-family:sans-serif'>Akses Ditolak</h2>");
+      throw new Error("Login gagal");
+    }
+  }
+})();
+</script>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
